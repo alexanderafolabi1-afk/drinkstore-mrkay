@@ -1,64 +1,126 @@
-// script.js
+// ============================================
+//   MRKAY DRINKS — MAIN JS
+// ============================================
 
-// Smooth scrolling for navigation links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    e.preventDefault();
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      target.scrollIntoView({
-        behavior: 'smooth'
-      });
-    }
-  });
-});
+document.addEventListener('DOMContentLoaded', () => {
 
-// Insert Beautiful SVG Logo
-function insertLogo() {
-  const logoContainer = document.getElementById('logo-svg');
-  if (logoContainer) {
-    logoContainer.innerHTML = `
-      <svg width="420" height="160" viewBox="0 0 420 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#D4AF37"/>
-            <stop offset="100%" stop-color="#B8972E"/>
-          </linearGradient>
-        </defs>
-        <rect x="25" y="35" width="95" height="95" rx="12" fill="url(#goldGrad)"/>
-        <path d="M72 48 L72 118" stroke="#111" stroke-width="14" stroke-linecap="round"/>
-        <circle cx="72" cy="38" r="22" fill="#111"/>
-        <text x="145" y="82" font-family="Playfair Display" font-size="58" fill="#D4AF37" font-weight="700" letter-spacing="-2">MRKAY</text>
-        <text x="148" y="115" font-family="Inter" font-size="19" fill="#ddd" letter-spacing="6">DRINKS STORE</text>
-      </svg>
-    `;
+  // ---- NAV SCROLL EFFECT ----
+  const nav = document.getElementById('nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
   }
-}
 
-// Floating WhatsApp Button
-function addFloatingWhatsApp() {
-  const floatBtn = document.createElement('a');
-  floatBtn.href = "https://wa.me/2347075824446";
-  floatBtn.target = "_blank";
-  floatBtn.className = "float-whatsapp";
-  floatBtn.innerHTML = `
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" width="32" height="32">
-  `;
-  document.body.appendChild(floatBtn);
-}
+  // ---- MOBILE MENU ----
+  const toggle = document.getElementById('navToggle');
+  const links = document.getElementById('navLinks');
 
-// Initialize everything
-document.addEventListener('DOMContentLoaded', function() {
-  insertLogo();
-  addFloatingWhatsApp();
-  
-  // Optional: Add subtle scroll effect to nav
-  window.addEventListener('scroll', () => {
-    const nav = document.querySelector('nav');
-    if (window.scrollY > 50) {
-      nav.style.background = 'rgba(10, 10, 10, 0.98)';
-    } else {
-      nav.style.background = 'rgba(10, 10, 10, 0.95)';
-    }
-  });
+  if (toggle && links) {
+    toggle.addEventListener('click', () => {
+      links.classList.toggle('open');
+      const isOpen = links.classList.contains('open');
+      toggle.setAttribute('aria-expanded', isOpen);
+      // animate hamburger to X
+      const spans = toggle.querySelectorAll('span');
+      if (isOpen) {
+        spans[0].style.transform = 'rotate(45deg) translate(4px, 4px)';
+        spans[1].style.opacity = '0';
+        spans[2].style.transform = 'rotate(-45deg) translate(4px, -4px)';
+      } else {
+        spans[0].style.transform = '';
+        spans[1].style.opacity = '';
+        spans[2].style.transform = '';
+      }
+    });
+
+    // Close on link click
+    links.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        links.classList.remove('open');
+        toggle.querySelectorAll('span').forEach(s => {
+          s.style.transform = '';
+          s.style.opacity = '';
+        });
+      });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!nav.contains(e.target) && links.classList.contains('open')) {
+        links.classList.remove('open');
+        toggle.querySelectorAll('span').forEach(s => {
+          s.style.transform = '';
+          s.style.opacity = '';
+        });
+      }
+    });
+  }
+
+  // ---- COLLECTION FILTER TABS ----
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const productCards = document.querySelectorAll('.product-card[data-cat]');
+
+  if (filterBtns.length && productCards.length) {
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+
+        productCards.forEach(card => {
+          if (filter === 'all' || card.dataset.cat === filter) {
+            card.classList.remove('hidden');
+            card.style.animation = 'fadeUp 0.4s ease both';
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      });
+    });
+  }
+
+  // ---- SCROLL REVEAL ----
+  const reveals = document.querySelectorAll(
+    '.section-header, .drink-card, .service-item, .testimonial-card, ' +
+    '.product-card, .service-block, .value-card, .stat-item, ' +
+    '.about-grid > *, .contact-card, .address-item, .service-block-content'
+  );
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, idx) => {
+        if (entry.isIntersecting) {
+          // Stagger cards in grid
+          const siblings = Array.from(entry.target.parentElement.children);
+          const delay = siblings.indexOf(entry.target) * 80;
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, delay);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+
+    reveals.forEach(el => {
+      el.classList.add('reveal');
+      observer.observe(el);
+    });
+  } else {
+    // Fallback: show all
+    reveals.forEach(el => el.classList.add('reveal', 'visible'));
+  }
+
+  // ---- MARQUEE PAUSE ON HOVER ----
+  const marqueeTrack = document.querySelector('.marquee-track');
+  if (marqueeTrack) {
+    marqueeTrack.addEventListener('mouseenter', () => {
+      marqueeTrack.style.animationPlayState = 'paused';
+    });
+    marqueeTrack.addEventListener('mouseleave', () => {
+      marqueeTrack.style.animationPlayState = 'running';
+    });
+  }
+
 });
